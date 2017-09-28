@@ -52,7 +52,7 @@ public class ViewfinderView extends View {
     protected Bitmap resultBitmap;
     protected final int maskColor;
     protected final int resultColor;
-    protected final int laserColor;
+    protected int laserColor;
     protected final int resultPointColor;
     protected int scannerAlpha;
     protected List<ResultPoint> possibleResultPoints;
@@ -121,6 +121,10 @@ public class ViewfinderView extends View {
 
             }
         });
+    }
+
+    public void setLaserColor(int laserColor) {
+        this.laserColor = laserColor;
     }
 
     protected void refreshSizes() {
