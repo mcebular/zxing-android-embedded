@@ -145,6 +145,12 @@ public class CameraInstance {
         }
     }
 
+    public void requestCameraFocus() {
+        if(cameraManager != null) {
+            cameraManager.requestFocusOnce();
+        }
+    }
+
     public void close() {
         Util.validateMainThread();
 

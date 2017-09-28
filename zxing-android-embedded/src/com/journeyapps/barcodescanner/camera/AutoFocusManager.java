@@ -98,7 +98,11 @@ public final class AutoFocusManager {
     }
 
     private void focus() {
-        if (useAutoFocus) {
+        focus(false);
+    }
+
+    public void focus(boolean force) {
+        if (useAutoFocus || force) {
             if (!stopped && !focusing) {
                 try {
                     camera.autoFocus(autoFocusCallback);
