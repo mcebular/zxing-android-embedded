@@ -145,6 +145,11 @@ public class CameraInstance {
         }
     }
 
+    /**
+     * Requests camera focusing. With autofocus disabled, this function will make camera start
+     * looking for focus and will stop focusing when it finds it (useful when fixing to certain
+     * focus distance is needed).
+     */
     public void requestCameraFocus() {
         if(cameraManager != null) {
             cameraManager.requestFocusOnce();

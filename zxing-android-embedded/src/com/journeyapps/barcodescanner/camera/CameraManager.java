@@ -476,6 +476,9 @@ public final class CameraManager {
         }
     }
 
+    /**
+     * @see CameraInstance#requestCameraFocus()
+     */
     public void requestFocusOnce() {
         if(autoFocusManager != null) {
             autoFocusManager.focus(true);
