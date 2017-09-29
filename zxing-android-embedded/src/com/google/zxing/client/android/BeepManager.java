@@ -108,6 +108,6 @@ public final class BeepManager {
 
 
     public void playBeepSound() {
-        soundPool.play(beepSound, 1, 1, 1, 0, 1);
+        soundPool.play(beepSound, BEEP_VOLUME, BEEP_VOLUME, 1, 0, 1);
     }
 }
