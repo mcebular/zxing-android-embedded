@@ -5,10 +5,10 @@ android {
     buildToolsVersion project.androidBuildTools
 
     defaultConfig {
-        minSdkVersion 13
+        minSdkVersion 14
         targetSdkVersion project.androidTargetSdk
-        versionCode 350
-        versionName "3.5.0"
+        versionCode 360
+        versionName "3.6.0"
     }
 
     def validConfig
@@ -57,12 +57,16 @@ android {
 dependencies {
     // If you use this from an external project, use the following instead:
     //   compile 'com.journeyapps:zxing-android-embedded:<version>'
-    compile project(':zxing-android-embedded')
+    implementation project(':zxing-android-embedded')
 
-    // For development purposes only
+    // leakcanary is for development purposes only
     // https://github.com/square/leakcanary
-    compile 'com.android.support:appcompat-v7:25.2.0'
-    compile 'com.android.support:support-v13:25.2.0'
-    debugCompile 'com.squareup.leakcanary:leakcanary-android:1.5'
-    releaseCompile 'com.squareup.leakcanary:leakcanary-android-no-op:1.5'
+    implementation 'com.android.support:appcompat-v7:27.1.1'
+    implementation 'com.android.support:support-v13:27.1.1'
+    debugImplementation 'com.squareup.leakcanary:leakcanary-android:1.5'
+    releaseImplementation 'com.squareup.leakcanary:leakcanary-android-no-op:1.5'
+
+    // AboutLibraries
+    implementation "com.mikepenz:aboutlibraries:6.1.1"
+
 }

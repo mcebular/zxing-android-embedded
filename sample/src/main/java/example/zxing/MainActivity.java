@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -16,10 +15,12 @@ import android.widget.Toast;
 import com.google.zxing.client.android.Intents;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
-import com.journeyapps.barcodescanner.CameraPreview;
+import com.mikepenz.aboutlibraries.LibsBuilder;
 
 
 public class MainActivity extends AppCompatActivity {
+
+    public final int CUSTOMIZED_REQUEST_CODE = 0x0000ffff;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,9 +32,19 @@ public class MainActivity extends AppCompatActivity {
         new IntentIntegrator(this).initiateScan();
     }
 
+    public void scanBarcodeWithCustomizedRequestCode(View view) {
+        new IntentIntegrator(this).setRequestCode(CUSTOMIZED_REQUEST_CODE).initiateScan();
+    }
+
     public void scanBarcodeInverted(View view){
         IntentIntegrator integrator = new IntentIntegrator(this);
-        integrator.addExtra(Intents.Scan.INVERTED_SCAN, true);
+        integrator.addExtra(Intents.Scan.SCAN_TYPE, Intents.Scan.INVERTED_SCAN);
+        integrator.initiateScan();
+    }
+
+    public void scanMixedBarcodes(View view){
+        IntentIntegrator integrator = new IntentIntegrator(this);
+        integrator.addExtra(Intents.Scan.SCAN_TYPE, Intents.Scan.MIXED_SCAN);
         integrator.initiateScan();
     }
 
@@ -46,6 +57,16 @@ public class MainActivity extends AppCompatActivity {
         integrator.setBeepEnabled(false);
         integrator.initiateScan();
     }
+
+    public void scanPDF417(View view) {
+        IntentIntegrator integrator = new IntentIntegrator(this);
+        integrator.setDesiredBarcodeFormats(IntentIntegrator.PDF_417);
+        integrator.setPrompt("Scan something");
+        integrator.setOrientationLocked(false);
+        integrator.setBeepEnabled(false);
+        integrator.initiateScan();
+    }
+
 
     public void scanBarcodeFrontCamera(View view) {
         IntentIntegrator integrator = new IntentIntegrator(this);
@@ -84,20 +105,34 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
+    public void about(View view) {
+        new LibsBuilder().start(this);
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
-        if(result != null) {
-            if(result.getContents() == null) {
-                Log.d("MainActivity", "Cancelled scan");
-                Toast.makeText(this, "Cancelled", Toast.LENGTH_LONG).show();
-            } else {
-                Log.d("MainActivity", "Scanned");
-                Toast.makeText(this, "Scanned: " + result.getContents(), Toast.LENGTH_LONG).show();
-            }
-        } else {
+        if (requestCode != CUSTOMIZED_REQUEST_CODE && requestCode != IntentIntegrator.REQUEST_CODE) {
             // This is important, otherwise the result will not be passed to the fragment
             super.onActivityResult(requestCode, resultCode, data);
+            return;
+        }
+        switch (requestCode) {
+            case CUSTOMIZED_REQUEST_CODE: {
+                Toast.makeText(this, "REQUEST_CODE = " + requestCode, Toast.LENGTH_LONG).show();
+                break;
+            }
+            default:
+                break;
+        }
+
+        IntentResult result = IntentIntegrator.parseActivityResult(resultCode, data);
+
+        if(result.getContents() == null) {
+            Log.d("MainActivity", "Cancelled scan");
+            Toast.makeText(this, "Cancelled", Toast.LENGTH_LONG).show();
+        } else {
+            Log.d("MainActivity", "Scanned");
+            Toast.makeText(this, "Scanned: " + result.getContents(), Toast.LENGTH_LONG).show();
         }
     }
 

@@ -13,12 +13,15 @@ Features:
 
 A sample application is available in [Releases](https://github.com/journeyapps/zxing-android-embedded/releases).
 
+By default, Android SDK 19+ is required because of `zxing:core` 3.3.2.
+To support SDK 14+, downgrade `zxing:core` to 3.3.0 -
+see [instructions](#adding-aar-dependency-with-gradle).
+
 ## Adding aar dependency with Gradle
 
-From version 3 this is a single library, supporting Gingerbread and later versions of Android
-(API level 9+). If you need support for earlier Android versions, use [version 2][4].
+From version 3.6.0, only Android SDK 19+ is supported by default.
 
-Add the following to your build.gradle file:
+Add the following to your `build.gradle` file:
 
 ```groovy
 repositories {
@@ -26,14 +29,43 @@ repositories {
 }
 
 dependencies {
-    compile 'com.journeyapps:zxing-android-embedded:3.5.0'
-    compile 'com.android.support:appcompat-v7:23.1.0'   // Version 23+ is required
+    implementation 'com.journeyapps:zxing-android-embedded:3.6.0'
+    implementation 'com.android.support:appcompat-v7:25.3.1'   // Minimum 23+ is required
 }
 
 android {
-    buildToolsVersion '23.0.2' // Older versions may give compile errors
+    buildToolsVersion '27.0.3' // Older versions may give compile errors
 }
 
+```
+
+For Android 14+ support, downgrade `zxing:core` to 3.3.0 or earlier:
+
+```groovy
+repositories {
+    jcenter()
+}
+
+dependencies {
+    implementation('com.journeyapps:zxing-android-embedded:3.6.0') { transitive = false }
+    implementation 'com.android.support:appcompat-v7:25.3.1'   // Version 23+ is required
+    implementation 'com.google.zxing:core:3.3.0'
+}
+
+android {
+    buildToolsVersion '27.0.3' // Older versions may give compile errors
+}
+
+```
+
+## Hardware Acceleration
+
+Hardware accelation is required since TextureView is used.
+
+Make sure it is enabled in your manifest file:
+
+```xml
+    <application android:hardwareAccelerated="true" ... >
 ```
 
 ## Usage with IntentIntegrator
@@ -78,6 +110,22 @@ integrator.initiateScan();
 ```
 
 See [IntentIntegrator][5] for more options.
+
+### Generate Barcode example
+
+While this is not the primary purpose of this library, it does include basic support for
+generating some barcode types:
+
+```java
+try {
+  BarcodeEncoder barcodeEncoder = new BarcodeEncoder();
+  Bitmap bitmap = barcodeEncoder.encodeBitmap("content", BarcodeFormat.QR_CODE, 400, 400);
+  ImageView imageViewQrCode = (ImageView) findViewById(R.id.qrCode);
+  imageViewQrCode.setImageBitmap(bitmap);
+} catch(Exception e) {
+
+}
+```
 
 ### Changing the orientation
 
@@ -137,8 +185,8 @@ You can then use your local version by specifying in your `build.gradle` file:
 
 Licensed under the [Apache License 2.0][7]
 
-	Copyright (C) 2012-2017 ZXing authors, Journey Mobile
-	
+	Copyright (C) 2012-2018 ZXing authors, Journey Mobile
+
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
 	You may obtain a copy of the License at

@@ -480,8 +480,24 @@ public final class CameraManager {
      * @see CameraInstance#requestCameraFocus()
      */
     public void requestFocusOnce() {
-        if(autoFocusManager != null) {
+        if (autoFocusManager != null) {
             autoFocusManager.focus(true);
+        }
+    }
+
+    /**
+     * Changes the settings for Camera.
+     *
+     * @param callback {@link CameraParametersCallback}
+     */
+    public void changeCameraParameters(CameraParametersCallback callback) {
+        if (camera != null) {
+            try {
+                camera.setParameters(callback.changeCameraParameters(camera.getParameters()));
+            } catch(RuntimeException e) {
+                // Camera error. Could happen if the camera is being closed.
+                Log.e(TAG, "Failed to change camera parameters", e);
+            }
         }
     }
 

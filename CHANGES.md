@@ -1,3 +1,13 @@
+### 3.6.0 (2018-03-04)
+
+* Use zxing:core 3.3.2 by default (#360).
+* Minimum SDK version 19, or 14 by using zxing:core 3.3.0.
+* Fix preview race condition (#324).
+* Request code can now specified per Intent, instead of globally (#287).
+* More helpers to specify barcode formats.
+* Allow scanning both inverted and non-inverted barcodes at the same time (alternating) (#326).
+* More examples.
+
 ### 3.5.0 (2017-03-20)
 
 * Allow changing the REQUEST_CODE value (#234).
@@ -16,7 +26,7 @@ Changes:
 * Beep on scan is now controlled only by the media volume, and still plays
   even if the device is in "silent mode", as long as the media volume is not muted.
 * The 150ms delay after scanning is removed.
-  
+
 Fixes:
 
 * An issue where the beep sometimes played twice is fixed (#221).

@@ -44,16 +44,38 @@ import java.util.Map;
 @SuppressWarnings("unused")
 public class IntentIntegrator {
 
-    public static int REQUEST_CODE = 0x0000c0de; // Only use bottom 16 bits
+    public static final int REQUEST_CODE = 0x0000c0de; // Only use bottom 16 bits
+
     private static final String TAG = IntentIntegrator.class.getSimpleName();
 
+
     // supported barcode formats
-    public static final Collection<String> PRODUCT_CODE_TYPES = list("UPC_A", "UPC_E", "EAN_8", "EAN_13", "RSS_14");
+
+    // Product Codes
+    public static final String UPC_A = "UPC_A";
+    public static final String UPC_E = "UPC_E";
+    public static final String EAN_8 = "EAN_8";
+    public static final String EAN_13 = "EAN_13";
+    public static final String RSS_14 = "RSS_14";
+
+    // Other 1D
+    public static final String CODE_39 = "CODE_39";
+    public static final String CODE_93 = "CODE_93";
+    public static final String CODE_128 = "CODE_128";
+    public static final String ITF = "ITF";
+
+    public static final String RSS_EXPANDED = "RSS_EXPANDED";
+
+    // 2D
+    public static final String QR_CODE = "QR_CODE";
+    public static final String DATA_MATRIX = "DATA_MATRIX";
+    public static final String PDF_417 = "PDF_417";
+
+
+    public static final Collection<String> PRODUCT_CODE_TYPES = list(UPC_A, UPC_E, EAN_8, EAN_13, RSS_14);
     public static final Collection<String> ONE_D_CODE_TYPES =
-            list("UPC_A", "UPC_E", "EAN_8", "EAN_13", "CODE_39", "CODE_93", "CODE_128",
-                    "ITF", "RSS_14", "RSS_EXPANDED");
-    public static final Collection<String> QR_CODE_TYPES = Collections.singleton("QR_CODE");
-    public static final Collection<String> DATA_MATRIX_TYPES = Collections.singleton("DATA_MATRIX");
+            list(UPC_A, UPC_E, EAN_8, EAN_13, RSS_14, CODE_39, CODE_93, CODE_128,
+                    ITF, RSS_14, RSS_EXPANDED);
 
     public static final Collection<String> ALL_CODE_TYPES = null;
 
@@ -67,12 +89,12 @@ public class IntentIntegrator {
 
     private Class<?> captureActivity;
 
+    private int requestCode = REQUEST_CODE;
+
     protected Class<?> getDefaultCaptureActivity() {
         return CaptureActivity.class;
     }
-    /**
-     * @param activity {@link Activity} invoking the integration
-     */
+
     public IntentIntegrator(Activity activity) {
         this.activity = activity;
     }
@@ -92,6 +114,21 @@ public class IntentIntegrator {
      */
     public IntentIntegrator setCaptureActivity(Class<?> captureActivity) {
         this.captureActivity = captureActivity;
+        return this;
+    }
+
+    /**
+     * Change the request code that is used for the Intent. If it is changed, it is the caller's
+     * responsibility to check the request code from the result intent.
+     *
+     * @param requestCode the new request code
+     * @return this
+     */
+    public IntentIntegrator setRequestCode(int requestCode) {
+        if (requestCode <= 0 || requestCode > 0x0000ffff) {
+            throw new IllegalArgumentException("requestCode out of range");
+        }
+        this.requestCode = requestCode;
         return this;
     }
 
@@ -163,6 +200,18 @@ public class IntentIntegrator {
     }
 
     /**
+     * Set to true to enable initial torch
+     *
+     * @param enabled true to enable initial torch
+     * @return this
+     */
+    public IntentIntegrator setTorchEnabled(boolean enabled) {
+        addExtra(Intents.Scan.TORCH_ENABLED, enabled);
+        return this;
+    }
+
+
+    /**
      * Set to false to disable beep on scan.
      *
      * @param enabled false to disable beep
@@ -196,10 +245,21 @@ public class IntentIntegrator {
     }
 
     /**
+     * Set the desired barcode formats to scan.
+     *
+     * @param desiredBarcodeFormats names of {@code BarcodeFormat}s to scan for
+     * @return this
+     */
+    public IntentIntegrator setDesiredBarcodeFormats(String... desiredBarcodeFormats) {
+        this.desiredBarcodeFormats = Arrays.asList(desiredBarcodeFormats);
+        return this;
+    }
+
+    /**
      * Initiates a scan for all known barcode types with the default camera.
      */
     public final void initiateScan() {
-        startActivityForResult(createScanIntent(), REQUEST_CODE);
+        startActivityForResult(createScanIntent(), requestCode);
     }
 
     /**
@@ -263,9 +323,7 @@ public class IntentIntegrator {
      */
     protected void startActivityForResult(Intent intent, int code) {
         if (fragment != null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                fragment.startActivityForResult(intent, code);
-            }
+            fragment.startActivityForResult(intent, code);
         } else if (supportFragment != null) {
             supportFragment.startActivityForResult(intent, code);
         } else {
@@ -275,9 +333,7 @@ public class IntentIntegrator {
 
     protected void startActivity(Intent intent) {
         if (fragment != null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                fragment.startActivity(intent);
-            }
+            fragment.startActivity(intent);
         } else if (supportFragment != null) {
             supportFragment.startActivity(intent);
         } else {
@@ -289,6 +345,8 @@ public class IntentIntegrator {
      * <p>Call this from your {@link Activity}'s
      * {@link Activity#onActivityResult(int, int, Intent)} method.</p>
      *
+     * This checks that the requestCode is equal to the default REQUEST_CODE.
+     *
      * @param requestCode request code from {@code onActivityResult()}
      * @param resultCode  result code from {@code onActivityResult()}
      * @param intent      {@link Intent} from {@code onActivityResult()}
@@ -298,24 +356,36 @@ public class IntentIntegrator {
      */
     public static IntentResult parseActivityResult(int requestCode, int resultCode, Intent intent) {
         if (requestCode == REQUEST_CODE) {
-            if (resultCode == Activity.RESULT_OK) {
-                String contents = intent.getStringExtra(Intents.Scan.RESULT);
-                String formatName = intent.getStringExtra(Intents.Scan.RESULT_FORMAT);
-                byte[] rawBytes = intent.getByteArrayExtra(Intents.Scan.RESULT_BYTES);
-                int intentOrientation = intent.getIntExtra(Intents.Scan.RESULT_ORIENTATION, Integer.MIN_VALUE);
-                Integer orientation = intentOrientation == Integer.MIN_VALUE ? null : intentOrientation;
-                String errorCorrectionLevel = intent.getStringExtra(Intents.Scan.RESULT_ERROR_CORRECTION_LEVEL);
-                String barcodeImagePath = intent.getStringExtra(Intents.Scan.RESULT_BARCODE_IMAGE_PATH);
-                return new IntentResult(contents,
-                        formatName,
-                        rawBytes,
-                        orientation,
-                        errorCorrectionLevel,
-                        barcodeImagePath);
-            }
-            return new IntentResult();
+            return parseActivityResult(resultCode, intent);
         }
         return null;
+    }
+
+    /**
+     * Parse activity result, without checking the request code.
+     *
+     * @param resultCode  result code from {@code onActivityResult()}
+     * @param intent      {@link Intent} from {@code onActivityResult()}
+     * @return an {@link IntentResult} containing the result of the scan. If the user cancelled scanning,
+     * the fields will be null.
+     */
+    public static IntentResult parseActivityResult(int resultCode, Intent intent) {
+        if (resultCode == Activity.RESULT_OK) {
+            String contents = intent.getStringExtra(Intents.Scan.RESULT);
+            String formatName = intent.getStringExtra(Intents.Scan.RESULT_FORMAT);
+            byte[] rawBytes = intent.getByteArrayExtra(Intents.Scan.RESULT_BYTES);
+            int intentOrientation = intent.getIntExtra(Intents.Scan.RESULT_ORIENTATION, Integer.MIN_VALUE);
+            Integer orientation = intentOrientation == Integer.MIN_VALUE ? null : intentOrientation;
+            String errorCorrectionLevel = intent.getStringExtra(Intents.Scan.RESULT_ERROR_CORRECTION_LEVEL);
+            String barcodeImagePath = intent.getStringExtra(Intents.Scan.RESULT_BARCODE_IMAGE_PATH);
+            return new IntentResult(contents,
+                    formatName,
+                    rawBytes,
+                    orientation,
+                    errorCorrectionLevel,
+                    barcodeImagePath);
+        }
+        return new IntentResult();
     }
 
     private static List<String> list(String... values) {
