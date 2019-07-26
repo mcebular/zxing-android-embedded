@@ -15,8 +15,8 @@
  limitations under the License.
  -->
 <resources>
-  <string name="zxing_app_name">Barcode Scanner</string>
-  <string name="zxing_button_ok">OK</string>
-  <string name="zxing_msg_camera_framework_bug">Sorry, the Android camera encountered a problem. You may need to restart the device.</string>
-  <string name="zxing_msg_default_status">Place a barcode inside the viewfinder rectangle to scan it.</string>
+  <string name="zxing_app_name">סורק ברקודים</string>
+  <string name="zxing_button_ok">אישור</string>
+  <string name="zxing_msg_camera_framework_bug">סליחה, מצלמת האנדרואיד נתקלה בבעיה. ייתכן שיהיה עליך להפעיל מחדש את המכשיר.</string>
+  <string name="zxing_msg_default_status">הצב ברקוד בתוך המלבן כדי לסרוק אותו.</string>
 </resources>
