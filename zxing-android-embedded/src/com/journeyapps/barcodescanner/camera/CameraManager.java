@@ -24,7 +24,6 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 
 import com.google.zxing.client.android.AmbientLightManager;
-import com.google.zxing.client.android.camera.CameraConfigurationUtils;
 import com.google.zxing.client.android.camera.open.OpenCameraInterface;
 import com.journeyapps.barcodescanner.Size;
 import com.journeyapps.barcodescanner.SourceData;
@@ -97,11 +96,15 @@ public final class CameraManager {
             PreviewCallback callback = this.callback;
             if (cameraResolution != null && callback != null) {
                 try {
-                    if(data == null) {
+                    if (data == null) {
                         throw new NullPointerException("No preview data received");
                     }
                     int format = camera.getParameters().getPreviewFormat();
                     SourceData source = new SourceData(data, cameraResolution.width, cameraResolution.height, format, getCameraRotation());
+
+                    if (cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+                        source.setPreviewMirrored(true);
+                    }
                     callback.onPreview(source);
                 } catch (RuntimeException e) {
                     // Could be:
@@ -112,7 +115,7 @@ public final class CameraManager {
                 }
             } else {
                 Log.d(TAG, "Got preview callback, but no handler or resolution available");
-                if(callback != null) {
+                if (callback != null) {
                     // Should generally not happen
                     callback.onPreviewError(new Exception("No resolution available"));
                 }
@@ -153,7 +156,7 @@ public final class CameraManager {
      * Must be called from camera thread.
      */
     public void configure() {
-        if(camera == null) {
+        if (camera == null) {
             throw new RuntimeException("Camera not open");
         }
         setParameters();
@@ -223,7 +226,7 @@ public final class CameraManager {
      * @return true if the camera rotation is perpendicular to the current display rotation.
      */
     public boolean isCameraRotated() {
-        if(rotationDegrees == -1) {
+        if (rotationDegrees == -1) {
             throw new IllegalStateException("Rotation not calculated yet. Call configure() first.");
         }
         return rotationDegrees % 180 != 0;
@@ -277,11 +280,9 @@ public final class CameraManager {
             }
 
             if (settings.isMeteringEnabled()) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1) {
-                    CameraConfigurationUtils.setVideoStabilization(parameters);
-                    CameraConfigurationUtils.setFocusArea(parameters);
-                    CameraConfigurationUtils.setMetering(parameters);
-                }
+                CameraConfigurationUtils.setVideoStabilization(parameters);
+                CameraConfigurationUtils.setFocusArea(parameters);
+                CameraConfigurationUtils.setMetering(parameters);
             }
 
         }
@@ -312,7 +313,7 @@ public final class CameraManager {
         if (rawSupportedSizes == null) {
             Camera.Size defaultSize = parameters.getPreviewSize();
             if (defaultSize != null) {
-                // Work around potential platform bugs
+                Size previewSize = new Size(defaultSize.width, defaultSize.height);
                 previewSizes.add(new Size(defaultSize.width, defaultSize.height));
             }
             return previewSizes;

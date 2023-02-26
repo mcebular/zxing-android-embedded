@@ -1,4 +1,6 @@
 /*
+ * Based on IntentResult.
+ *
  * Copyright 2009 ZXing authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,16 +16,20 @@
  * limitations under the License.
  */
 
-package com.google.zxing.integration.android;
+package com.journeyapps.barcodescanner;
 
+import android.app.Activity;
 import android.content.Intent;
 
+import com.google.zxing.client.android.Intents;
+import com.google.zxing.integration.android.IntentResult;
+
 /**
- * <p>Encapsulates the result of a barcode scan invoked through {@link IntentIntegrator}.</p>
+ * <p>Encapsulates the result of a barcode scan invoked through {@link ScanContract}.</p>
  *
  * @author Sean Owen
  */
-public final class IntentResult {
+public final class ScanIntentResult {
 
     private final String contents;
     private final String formatName;
@@ -33,21 +39,21 @@ public final class IntentResult {
     private final String barcodeImagePath;
     private final Intent originalIntent;
 
-    IntentResult() {
+    ScanIntentResult() {
         this(null, null, null, null, null, null, null);
     }
 
-    IntentResult(Intent intent) {
+    ScanIntentResult(Intent intent) {
         this(null, null, null, null, null, null, intent);
     }
 
-    IntentResult(String contents,
-                 String formatName,
-                 byte[] rawBytes,
-                 Integer orientation,
-                 String errorCorrectionLevel,
-                 String barcodeImagePath,
-                 Intent originalIntent) {
+    ScanIntentResult(String contents,
+                     String formatName,
+                     byte[] rawBytes,
+                     Integer orientation,
+                     String errorCorrectionLevel,
+                     String barcodeImagePath,
+                     Intent originalIntent) {
         this.contents = contents;
         this.formatName = formatName;
         this.rawBytes = rawBytes;
@@ -116,5 +122,34 @@ public final class IntentResult {
             "EC level: " + errorCorrectionLevel + '\n' +
             "Barcode image: " + barcodeImagePath + '\n' +
             "Original intent: " + originalIntent + '\n';
+    }
+
+
+    /**
+     * Parse activity result, without checking the request code.
+     *
+     * @param resultCode result code from {@code onActivityResult()}
+     * @param intent     {@link Intent} from {@code onActivityResult()}
+     * @return an {@link IntentResult} containing the result of the scan. If the user cancelled scanning,
+     * the fields will be null.
+     */
+    public static ScanIntentResult parseActivityResult(int resultCode, Intent intent) {
+        if (resultCode == Activity.RESULT_OK) {
+            String contents = intent.getStringExtra(Intents.Scan.RESULT);
+            String formatName = intent.getStringExtra(Intents.Scan.RESULT_FORMAT);
+            byte[] rawBytes = intent.getByteArrayExtra(Intents.Scan.RESULT_BYTES);
+            int intentOrientation = intent.getIntExtra(Intents.Scan.RESULT_ORIENTATION, Integer.MIN_VALUE);
+            Integer orientation = intentOrientation == Integer.MIN_VALUE ? null : intentOrientation;
+            String errorCorrectionLevel = intent.getStringExtra(Intents.Scan.RESULT_ERROR_CORRECTION_LEVEL);
+            String barcodeImagePath = intent.getStringExtra(Intents.Scan.RESULT_BARCODE_IMAGE_PATH);
+            return new ScanIntentResult(contents,
+                    formatName,
+                    rawBytes,
+                    orientation,
+                    errorCorrectionLevel,
+                    barcodeImagePath,
+                    intent);
+        }
+        return new ScanIntentResult(intent);
     }
 }

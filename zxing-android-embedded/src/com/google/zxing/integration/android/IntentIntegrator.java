@@ -34,12 +34,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
  * @author Sean Owen
  * @author Fred Lin
  * @author Isaac Potoczny-Jones
  * @author Brad Drehmer
  * @author gcstang
+ * @deprecated Use ScanOptions and ScanContract instead.
  */
 @SuppressWarnings("unused")
 public class IntentIntegrator {
@@ -265,6 +265,7 @@ public class IntentIntegrator {
     /**
      * Initiates a scan for all known barcode types with the default camera.
      * And starts a timer to finish on timeout
+     *
      * @return Activity.RESULT_CANCELED and true on parameter TIMEOUT.
      */
     public IntentIntegrator setTimeout(long timeout) {
@@ -344,7 +345,7 @@ public class IntentIntegrator {
     /**
      * <p>Call this from your {@link Activity}'s
      * {@link Activity#onActivityResult(int, int, Intent)} method.</p>
-     *
+     * <p>
      * This checks that the requestCode is equal to the default REQUEST_CODE.
      *
      * @param requestCode request code from {@code onActivityResult()}
@@ -353,6 +354,7 @@ public class IntentIntegrator {
      * @return null if the event handled here was not related to this class, or
      * else an {@link IntentResult} containing the result of the scan. If the user cancelled scanning,
      * the fields will be null.
+     * @deprecated Not compatible with setRequestCode(). Use parseActivityResult(resultCode, intent) instead.
      */
     public static IntentResult parseActivityResult(int requestCode, int resultCode, Intent intent) {
         if (requestCode == REQUEST_CODE) {
@@ -364,8 +366,8 @@ public class IntentIntegrator {
     /**
      * Parse activity result, without checking the request code.
      *
-     * @param resultCode  result code from {@code onActivityResult()}
-     * @param intent      {@link Intent} from {@code onActivityResult()}
+     * @param resultCode result code from {@code onActivityResult()}
+     * @param intent     {@link Intent} from {@code onActivityResult()}
      * @return an {@link IntentResult} containing the result of the scan. If the user cancelled scanning,
      * the fields will be null.
      */
@@ -383,9 +385,10 @@ public class IntentIntegrator {
                     rawBytes,
                     orientation,
                     errorCorrectionLevel,
-                    barcodeImagePath);
+                    barcodeImagePath,
+                    intent);
         }
-        return new IntentResult();
+        return new IntentResult(intent);
     }
 
     private static List<String> list(String... values) {
@@ -409,6 +412,18 @@ public class IntentIntegrator {
                 intent.putExtra(key, (Float) value);
             } else if (value instanceof Bundle) {
                 intent.putExtra(key, (Bundle) value);
+            } else if (value instanceof int[]) {
+                intent.putExtra(key, (int[]) value);
+            } else if (value instanceof long[]) {
+                intent.putExtra(key, (long[]) value);
+            } else if (value instanceof boolean[]) {
+                intent.putExtra(key, (boolean[]) value);
+            } else if (value instanceof double[]) {
+                intent.putExtra(key, (double[]) value);
+            } else if (value instanceof float[]) {
+                intent.putExtra(key, (float[]) value);
+            } else if (value instanceof String[]) {
+                intent.putExtra(key, (String[]) value);
             } else {
                 intent.putExtra(key, value.toString());
             }

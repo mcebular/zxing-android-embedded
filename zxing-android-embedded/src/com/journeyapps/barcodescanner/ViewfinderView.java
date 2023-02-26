@@ -16,7 +16,6 @@
 
 package com.journeyapps.barcodescanner;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
@@ -54,15 +53,16 @@ public class ViewfinderView extends View {
     protected final int resultColor;
     protected int laserColor;
     protected final int resultPointColor;
+    protected boolean laserVisibility;
     protected int scannerAlpha;
     protected List<ResultPoint> possibleResultPoints;
     protected List<ResultPoint> lastPossibleResultPoints;
     protected CameraPreview cameraPreview;
 
-    // Cache the framingRect and previewFramingRect, so that we can still draw it after the preview
+    // Cache the framingRect and previewSize, so that we can still draw it after the preview
     // stopped.
     protected Rect framingRect;
-    protected Rect previewFramingRect;
+    protected Size previewSize;
 
     // This constructor is used when the class is built from an XML resource.
     public ViewfinderView(Context context, AttributeSet attrs) {
@@ -73,7 +73,7 @@ public class ViewfinderView extends View {
 
         Resources resources = getResources();
 
-        // Get setted attributes on view
+        // Get set attributes on view
         TypedArray attributes = getContext().obtainStyledAttributes(attrs, R.styleable.zxing_finder);
 
         this.maskColor = attributes.getColor(R.styleable.zxing_finder_zxing_viewfinder_mask,
@@ -84,6 +84,8 @@ public class ViewfinderView extends View {
                 resources.getColor(R.color.zxing_viewfinder_laser));
         this.resultPointColor = attributes.getColor(R.styleable.zxing_finder_zxing_possible_result_points,
                 resources.getColor(R.color.zxing_possible_result_points));
+        this.laserVisibility = attributes.getBoolean(R.styleable.zxing_finder_zxing_viewfinder_laser_visibility,
+                true);
 
         attributes.recycle();
 
@@ -128,29 +130,29 @@ public class ViewfinderView extends View {
     }
 
     protected void refreshSizes() {
-        if(cameraPreview == null) {
+        if (cameraPreview == null) {
             return;
         }
         Rect framingRect = cameraPreview.getFramingRect();
-        Rect previewFramingRect = cameraPreview.getPreviewFramingRect();
-        if(framingRect != null && previewFramingRect != null) {
+        Size previewSize = cameraPreview.getPreviewSize();
+        if (framingRect != null && previewSize != null) {
             this.framingRect = framingRect;
-            this.previewFramingRect = previewFramingRect;
+            this.previewSize = previewSize;
         }
     }
 
     @Override
     public void onDraw(Canvas canvas) {
         refreshSizes();
-        if (framingRect == null || previewFramingRect == null) {
+        if (framingRect == null || previewSize == null) {
             return;
         }
 
         final Rect frame = framingRect;
-        final Rect previewFrame = previewFramingRect;
+        final Size previewSize = this.previewSize;
 
-        final int width = canvas.getWidth();
-        final int height = canvas.getHeight();
+        final int width = getWidth();
+        final int height = getHeight();
 
         // Draw the exterior (i.e. outside the framing rect) darkened
         paint.setColor(resultBitmap != null ? resultColor : maskColor);
@@ -164,19 +166,19 @@ public class ViewfinderView extends View {
             paint.setAlpha(CURRENT_POINT_OPACITY);
             canvas.drawBitmap(resultBitmap, null, frame, paint);
         } else {
+            // If wanted, draw a red "laser scanner" line through the middle to show decoding is active
+            if (laserVisibility) {
+                paint.setColor(laserColor);
 
-            // Draw a red "laser scanner" line through the middle to show decoding is active
-            paint.setColor(laserColor);
-            paint.setAlpha(SCANNER_ALPHA[scannerAlpha]);
-            scannerAlpha = (scannerAlpha + 1) % SCANNER_ALPHA.length;
-            final int middle = frame.height() / 2 + frame.top;
-            canvas.drawRect(frame.left + 2, middle - 1, frame.right - 1, middle + 2, paint);
+                paint.setAlpha(SCANNER_ALPHA[scannerAlpha]);
+                scannerAlpha = (scannerAlpha + 1) % SCANNER_ALPHA.length;
 
-            final float scaleX = frame.width() / (float) previewFrame.width();
-            final float scaleY = frame.height() / (float) previewFrame.height();
+                final int middle = frame.height() / 2 + frame.top;
+                canvas.drawRect(frame.left + 2, middle - 1, frame.right - 1, middle + 2, paint);
+            }
 
-            final int frameLeft = frame.left;
-            final int frameTop = frame.top;
+            final float scaleX = this.getWidth() / (float) previewSize.width;
+            final float scaleY = this.getHeight() / (float) previewSize.height;
 
             // draw the last possible result points
             if (!lastPossibleResultPoints.isEmpty()) {
@@ -185,8 +187,8 @@ public class ViewfinderView extends View {
                 float radius = POINT_SIZE / 2.0f;
                 for (final ResultPoint point : lastPossibleResultPoints) {
                     canvas.drawCircle(
-                            frameLeft + (int) (point.getX() * scaleX),
-                            frameTop + (int) (point.getY() * scaleY),
+                             (int) (point.getX() * scaleX),
+                             (int) (point.getY() * scaleY),
                             radius, paint
                     );
                 }
@@ -199,8 +201,8 @@ public class ViewfinderView extends View {
                 paint.setColor(resultPointColor);
                 for (final ResultPoint point : possibleResultPoints) {
                     canvas.drawCircle(
-                            frameLeft + (int) (point.getX() * scaleX),
-                            frameTop + (int) (point.getY() * scaleY),
+                            (int) (point.getX() * scaleX),
+                            (int) (point.getY() * scaleY),
                             POINT_SIZE, paint
                     );
                 }
@@ -253,5 +255,9 @@ public class ViewfinderView extends View {
 
     public void setMaskColor(int maskColor) {
         this.maskColor = maskColor;
+    }
+
+    public void setLaserVisibility(boolean visible) {
+        this.laserVisibility = visible;
     }
 }
